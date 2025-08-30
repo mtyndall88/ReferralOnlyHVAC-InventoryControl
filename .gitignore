@@ -1,17 +1,26 @@
-# Ignore log files
-logs.txt
+# Logs
 *.log
+logs*
+*.lck
 
-# Ignore compiled class files
+# Compiled output
+*.class
+*.jar
+*.war
+*.ear
 /bin/
 /target/
 /out/
 
-# Ignore Eclipse project files
+# Eclipse project files
 .classpath
 .project
 .settings/
+.metadata/
+.recommenders/
+.apt_generated/
+.externalToolBuilders/
 
-# Ignore OS-specific files
+# OS-specific
 .DS_Store
 Thumbs.db
