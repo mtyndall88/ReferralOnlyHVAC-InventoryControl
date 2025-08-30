@@ -28,7 +28,7 @@ public final class AppLogger {
 			logger.addHandler(ch);
 			
 			// Handler: sends log messages to a file (logs.txt)
-			FileHandler fh = new FileHandler("app.logger", true);
+			FileHandler fh = new FileHandler("logs.txt", true);
 			fh.setLevel(Level.ALL);
 			
 			// Formatter: same SimpleFormatter applied to file output

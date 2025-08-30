@@ -14,7 +14,7 @@ public class DBConnection {
 	public static Connection getInstance() throws SQLException {
 		if (connection == null || connection.isClosed()) {
 			try {
-				String url = "jdbc:mysql://localhost:3306/referral_inventory";
+				String url = "jdbc:mysql://localhost/referral_inventory";
                 String user = "root";
                 String password = "root";
                 
