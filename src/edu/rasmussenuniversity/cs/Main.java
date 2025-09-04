@@ -11,6 +11,10 @@ public class Main {
 	
 	public static void main(String[] args) {
 		
+		// GUI Example
+		// GUIExample g = new GUIExample();
+		// g.OpenGui();
+		
 		// Display welcome message to user
 		System.out.println("Welcome to Referral Only HVAC Inventory System ");
 		// Log application start
@@ -31,6 +35,7 @@ public class Main {
 				System.out.println("a = Add a new product");
 				System.out.println("u = Update product price and reorder level");
 				System.out.println("d = Deactivate product");
+				System.out.println("r = Low stock report");
 				System.out.println("q = Quit");
 				System.out.println("Selection: ");
 				
@@ -56,7 +61,7 @@ public class Main {
 						System.out.print("Enter product name to search: ");
 						String name = scanner.nextLine().trim();
 						// DB: WHERE name LIKE
-						productActions.searchProduct(name); //placeholder
+						productActions.searchProduct(name);
 					} 
 					
 					else if (input == 'a') {
@@ -104,6 +109,12 @@ public class Main {
 					
 					// DB: UPDATE products SET active=false
 					productActions.deactivateProduct(id, reason);
+					}
+					
+					else if (input == 'r') {
+							Reports.lowStockReport();
+							
+					// DB: SELECT FROM products WHERE stock_qty <= reorder_level
 					}
 					
 					else if (input == 'q') {

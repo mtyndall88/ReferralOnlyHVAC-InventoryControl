@@ -14,51 +14,151 @@ public class Product {
 	// Logger
 	private static final Logger log = AppLogger.getLogger();
 	
-	public String getAllProducts() {
+	public String getAllProducts() throws SQLException {
+		System.out.println("All Products");
 		StringBuilder result = new StringBuilder();
 		
 		try {
 			Connection connect = DBConnection.getInstance(); // Singleton: one shared DB connection
-			Statement statement = connect.createStatement();
-			ResultSet rs = statement.executeQuery(
-					"SELECT id, sku, name, price, stock_qty, reorder_level, active FROM products");
-				
-			while (rs.next()) {
-				long id = rs.getLong("id");
-				String sku = rs.getString("sku");
-				String name = rs.getString("name");
-                double price = rs.getDouble("price");
-                int qty = rs.getInt("stock_qty");
-                int rl = rs.getInt("reorder_level");
-                boolean active = rs.getBoolean("active");
+			String sql = "SELECT id, sku, name, price, stock_qty, reorder_level, active FROM products";
+			
+			try (Statement statement = connect.createStatement();
+					ResultSet rs = statement.executeQuery(sql)) {
+					while (rs.next()) {
+						long id = rs.getLong("id");
+						String sku = rs.getString("sku");
+						String name = rs.getString("name");
+						double price = rs.getDouble("price");
+						int qty = rs.getInt("stock_qty");
+						int rl = rs.getInt("reorder_level");
+						boolean active = rs.getBoolean("active");
                 
-                String row = String.format("ID: %d  SKU: %s  Name: %s  Price: $%s  Qty: %d  Reorder: %d %n",
+						String row = String.format("ID: %d  SKU: %s  Name: %s  Price: $%.2f  Qty: %d  Reorder: %d  Active: %s",
                         id, sku, name, price, qty, rl, active ? "Yes" : "No");
                 
-                result.append(row).append(System.lineSeparator());
-                System.out.println(row);
+						result.append(row).append(System.lineSeparator());
+						System.out.println(row);
+				}
 			}
 			// Log for getAllProducts retrieving successfully
-			log.info("getAllProducts executed sucessfully");
+			log.info("getAllProducts executed successfully");
 		}
-		catch(Exception ex) {
+		catch (Exception ex) {
 			// Log for exception in getAllProducts
 			log.log(Level.SEVERE, "Error in getAllProducts", ex);
 		}
 		return result.toString();
 	}
 	
-	// Product search DB connection coming later
-	public void searchProduct(String name) {
-		System.out.println("Searching for product by name: " + name + " (DB coming later)");
-		log.info("Search requested for product: " + name);
+	public String searchProduct (String name1) throws SQLException {
+		System.out.println("Searching for product by name: " + name1 + "\n");
+		StringBuilder result = new StringBuilder();
+		
+		try {
+			Connection connect = DBConnection.getInstance(); // Singleton: one shared DB connection
+			String sql = "SELECT id, sku, name, price, stock_qty, reorder_level, active FROM products";
+			
+			try (PreparedStatement ps = connect.prepareStatement(sql)) {
+				ps.setString(1, "%" + name1 + "%");
+				try (ResultSet rs = ps.executeQuery()) {
+					while (rs.next()) {
+						long id = rs.getLong("id");
+						String sku = rs.getString("sku");
+						String name = rs.getString("name");
+		                double price = rs.getDouble("price");
+		                int qty = rs.getInt("stock_qty");
+		                int rl = rs.getInt("reorder_level");
+		                boolean active = rs.getBoolean("active");
+		                
+		                String row = String.format("ID: %d  SKU: %s  Name: %s  Price: $%.2f  Qty: %d  Reorder: %d  Active: %s",
+		                        id, sku, name, price, qty, rl, active ? "Yes" : "No");
+		                
+		                result.append(row).append(System.lineSeparator());
+		                System.out.println(row);
+					}
+				}
+			}
+			log.info("Search requested for product: " + name1);
+		}
+		catch (SQLException ex) {	
+			// Log for SQL exception in searchProducts
+			log.log(Level.SEVERE, "Error in searchProducts", ex);
+		}
+		return result.toString();
 	}
 	
-	// Add product DB connection coming later
 	public void addProduct(String sku, String name, String description, double price, int reorderLevel) {
-		System.out.printf("Add product: (DB coming later) %s %s %n", sku, name);
-		// Log for adding a product
-		log.info("Add product requested: " + name + ", SKU: " +sku);
+		if (sku == null || sku.trim().isEmpty() || name == null || name.trim().isEmpty()) {
+			System.out.println("SKU and Name are required to add product.");
+			log.warning("Add product failed: missing SKU or Name.");
+			return;
+		}
+		
+		try { 
+			Connection connect = DBConnection.getInstance();
+			
+			// Insert with generated ID; stock starts at 0, active = 1 (true)
+			String insertSql = "INSERT INTO products (sku, name, description, price, reorder_level, stock_qty, active)" +
+						 "VALUES (?, ?, ?, ?, ?, 0, 1)";
+		
+			try (PreparedStatement ps = connect.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+				ps.setString(1, sku);
+				ps.setString(2, name);
+				ps.setString(3, description);
+				ps.setDouble(4, price);
+				ps.setInt(5, reorderLevel);
+				
+				int rows = ps.executeUpdate();
+				if (rows == 0) {
+					System.out.println("No product was added.");
+					log.warning("Insert returned 0 rows for SKU: " + sku);
+					return;
+				}
+				
+				long newId = -1L;
+				try (ResultSet keys = ps.getGeneratedKeys()) {
+					if (keys.next()) {
+						newId = keys.getLong(1);
+					}
+				}
+
+				String selectSql = "SELECT id, sku, name, price, stock_qty, reorder_level, active FROM products WHERE id = ?";
+				try (PreparedStatement sel = connect.prepareStatement(selectSql)) {
+					sel.setLong(1,  newId);
+					try (ResultSet rs = sel.executeQuery()) {
+						if (rs.next()) {
+							long id = rs.getLong("id");
+							String rSku = rs.getString("sku");
+							String rName = rs.getString("name");
+			                double rPrice = rs.getDouble("price");
+			                int qty = rs.getInt("stock_qty");
+			                int rl = rs.getInt("reorder_level");
+			                boolean active = rs.getBoolean("active");
+			                
+			                String row = String.format("ID: %d  SKU: %s  Name: %s  Price: $%.2f  Qty: %d  Reorder: %d  Active: %s",
+		                        id, rSku, rName, rPrice, qty, rl, active ? "Yes" : "No");
+			                
+			                System.out.println("Product added:");
+							System.out.println(row);
+							log.info("Product added successfully: ID " + id + ", SKU " + rSku);
+						}
+						else {
+							System.out.println("Product added, but could not load the inserted record.");
+							log.warning("Inserted product but SELECT by generated id returned no rows. ID: " + newId);
+						}
+					}
+				}
+			}
+		}
+		catch (java.sql.SQLIntegrityConstraintViolationException dup) {
+			System.out.println("A product with that SKU already exists.");
+			log.warning("Duplicate SKU on insert: " + sku + " -> " + dup.getMessage());
+		}
+		catch (Exception ex) {
+			System.out.println("There was an error adding the product. See logs for details.");
+			// Log for exception in getAllProducts
+			log.log(Level.SEVERE, "Error adding product: " +name + " (SKU " + sku + ")", ex);
+		}
 	}
 	
 	// Update product DB connection coming later
