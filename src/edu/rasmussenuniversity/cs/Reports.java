@@ -11,7 +11,7 @@ public class Reports {
 	
 	public static void lowStockReport() {
 		StringBuilder result = new StringBuilder();
-		System.out.println("\n=== Low Stock Report ===");
+		System.out.println("=== Low Stock Report ===" + "\n");
 		try {
 			Connection connect = DBConnection.getInstance(); // Singleton: one shared DB connection
 			Statement statement = connect.createStatement();
@@ -29,7 +29,7 @@ public class Reports {
 				int qty = rs.getInt("stock_qty");
 				int rl = rs.getInt("reorder_level");
 				
-				String row = String.format("ID: %d  SKU: %s  Name: %s  Qty: %d  Reorder: %d %n",
+				String row = String.format("ID: %d  SKU: %s  Name: %s  Qty: %d  Reorder: %d",
 		                        id, sku, name, qty, rl);
 				
 				result.append(row).append(System.lineSeparator());

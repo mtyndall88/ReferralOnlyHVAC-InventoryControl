@@ -15,7 +15,7 @@ public class Product {
 	private static final Logger log = AppLogger.getLogger();
 	
 	public String getAllProducts() throws SQLException {
-		System.out.println("All Products");
+		System.out.println("All Products" + "\n");
 		StringBuilder result = new StringBuilder();
 		
 		try {
@@ -50,42 +50,50 @@ public class Product {
 		return result.toString();
 	}
 	
-	public String searchProduct (String name1) throws SQLException {
-		System.out.println("Searching for product by name: " + name1 + "\n");
+	public String searchProduct (String keyword) throws SQLException {
+		System.out.println("Searching for product by SKU or name: " + keyword + "\n");
 		StringBuilder result = new StringBuilder();
-		
-		try {
-			Connection connect = DBConnection.getInstance(); // Singleton: one shared DB connection
-			String sql = "SELECT id, sku, name, price, stock_qty, reorder_level, active FROM products";
+		String sql = "SELECT id, sku, name, price, stock_qty, reorder_level, active FROM products " +
+					 "WHERE sku LIKE ? OR name LIKE ?";
+		try (Connection connect = DBConnection.getInstance(); // Singleton: one shared DB connection
+			PreparedStatement ps = connect.prepareStatement(sql)) {
 			
-			try (PreparedStatement ps = connect.prepareStatement(sql)) {
-				ps.setString(1, "%" + name1 + "%");
-				try (ResultSet rs = ps.executeQuery()) {
-					while (rs.next()) {
-						long id = rs.getLong("id");
-						String sku = rs.getString("sku");
-						String name = rs.getString("name");
-		                double price = rs.getDouble("price");
-		                int qty = rs.getInt("stock_qty");
-		                int rl = rs.getInt("reorder_level");
-		                boolean active = rs.getBoolean("active");
-		                
-		                String row = String.format("ID: %d  SKU: %s  Name: %s  Price: $%.2f  Qty: %d  Reorder: %d  Active: %s",
-		                        id, sku, name, price, qty, rl, active ? "Yes" : "No");
-		                
-		                result.append(row).append(System.lineSeparator());
-		                System.out.println(row);
-					}
+			
+			String pattern = "%" + keyword + "%";
+			ps.setString(1, pattern);
+			ps.setString(2, pattern);
+			
+			try (ResultSet rs = ps.executeQuery()) {
+				boolean any = false;
+				while (rs.next()) {
+					any = true;
+					long id = rs.getLong("id");
+					String sku = rs.getString("sku");
+					String name = rs.getString("name");
+	                double price = rs.getDouble("price");
+	                int qty = rs.getInt("stock_qty");
+	                int rl = rs.getInt("reorder_level");
+	                boolean active = rs.getBoolean("active");
+	                
+	                String row = String.format("ID: %d  SKU: %s  Name: %s  Price: $%.2f  Qty: %d  Reorder: %d  Active: %s",
+	                        id, sku, name, price, qty, rl, active ? "Yes" : "No");
+	                
+	                result.append(row).append(System.lineSeparator());
+	                System.out.println(row);
+				}
+				if (!any) {
+					System.out.println("No matching products found.");
 				}
 			}
-			log.info("Search requested for product: " + name1);
+			log.info("Search requested for : " + keyword);
 		}
-		catch (SQLException ex) {	
+		catch (SQLException ex) {
 			// Log for SQL exception in searchProducts
 			log.log(Level.SEVERE, "Error in searchProducts", ex);
 		}
 		return result.toString();
 	}
+					
 	
 	public void addProduct(String sku, String name, String description, double price, int reorderLevel) {
 		if (sku == null || sku.trim().isEmpty() || name == null || name.trim().isEmpty()) {
