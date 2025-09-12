@@ -15,6 +15,8 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
+//Future extension: Optional Swing demo. Not used in this console-based application.
+
 public class GUIExample {
 	
 	public void OpenGui() {

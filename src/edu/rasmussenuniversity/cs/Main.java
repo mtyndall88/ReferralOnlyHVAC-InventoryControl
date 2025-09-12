@@ -11,7 +11,7 @@ public class Main {
 	
 	public static void main(String[] args) {
 		
-		// GUI Example
+		// Future extension: Optional Swing demo. Not used in this console-based application.
 		// GUIExample g = new GUIExample();
 		// g.OpenGui();
 		
@@ -21,10 +21,55 @@ public class Main {
 		log.info("Application started.");
 		
 		Product productActions = new Product(); // DB actions
+		Auth auth = new Auth(); // Auth helper
+		User currentUser = null; // Current User
 		char input = 'q'; // Default input
 		
 		// Single Scanner for reading user input
 		try (Scanner scanner = new Scanner(System.in)) {
+			
+			// Login / Register gate before the loop
+			while (currentUser == null) {
+				System.out.println("(L)ogin, (R)egister, or (Q)uit:");
+				String t = scanner.nextLine().trim().toLowerCase();
+				if (t.isEmpty()) {
+					System.out.println("Please enter L, R, or Q.");
+					continue;
+				}
+				char c = t.charAt(0);
+				if (c == 'l') {
+					System.out.print("Username: ");
+					String u = scanner.nextLine().trim();
+					System.out.print("Password: ");
+					String p = scanner.nextLine().trim();
+					currentUser = auth.login(u, p);
+					if (currentUser == null) {
+						System.out.println("Login failed. Try again.");
+					}
+					
+				}
+				else if (c == 'r') {
+					System.out.print("New username: ");
+					String u = scanner.nextLine().trim();
+					System.out.println("Password must be 12+ characters with one upper, lower, digit, and special charater.");
+					System.out.print("New password: ");
+					String p = scanner.nextLine().trim();
+					Long id = auth.register(u, p, "STAFF"); // or "ADMIN" for your first user
+					if (id != null) {
+						System.out.println("Registered successfully. Please login.");
+					}
+				}
+				else if (c == 'q') {
+					System.out.println("Goodbye.");
+					log.info("Application exited at auth gate.");
+					return;
+				}
+				else {
+					System.out.println("Please enter L, R, or Q.");
+				}
+			}
+			System.out.println("Logged in as " + currentUser.username() + " (" + currentUser.role() + ")");
+			log.info("User logged in: " + currentUser.username() + " role=" + currentUser.role());
 			
 			// Menu Loop
 			do {
@@ -32,10 +77,17 @@ public class Main {
 				System.out.println("\nPlease make your selection:");
 				System.out.println("g = Get all products");
 				System.out.println("s = Search product by name");
-				System.out.println("a = Add a new product");
-				System.out.println("u = Update product price and reorder level");
-				System.out.println("d = Deactivate product");
+				// If viewer is logged in, hide a, u, d, j) 
+				if (!"VIEWER".equals(currentUser.role())) { 
+					System.out.println("a = Add a new product");
+					System.out.println("u = Update product price and reorder level");
+					System.out.println("d = Deactivate product");
+					System.out.println("j = Adjust stock (+/-)");
+					System.out.println("v = Add invoice");
+				}
+				System.out.println("i = List invoices (Last 10)");
 				System.out.println("r = Low stock report");
+				System.out.println("t = Audit log report (Last 20)");
 				System.out.println("q = Quit");
 				System.out.println("Selection: ");
 				
@@ -65,7 +117,11 @@ public class Main {
 					} 
 					
 					else if (input == 'a') {
-						// Gather product information fields (DB connection later)
+						if ("VIEWER".equals(currentUser.role())) {
+							System.out.println("Not permitted.");
+							continue;
+						}
+						// Gather product information fields
 						System.out.print("SKU: ");
 						String sku = scanner.nextLine().trim();
 					
@@ -82,10 +138,14 @@ public class Main {
 						int reorder = Integer.parseInt(scanner.nextLine().trim());
 
 						// DB: INSERT into products
-						productActions.addProduct(sku, name, desc, price, reorder);
+						productActions.addProduct(sku, name, desc, price, reorder, currentUser.id());
 					} 
 					
 					else if (input == 'u') {
+						if ("VIEWER".equals(currentUser.role())) {
+							System.out.println("Not permitted.");
+							continue;
+						}
 						// Gather product information (DB connection later)
 						System.out.print("Product ID: ");
 						long id = Long.parseLong(scanner.nextLine().trim());
@@ -97,24 +157,70 @@ public class Main {
 						int reorder = Integer.parseInt(scanner.nextLine().trim());
 					
 						// DB: UPDATE product SET
-						productActions.updateProduct(id, price, reorder);
+						productActions.updateProduct(id, price, reorder, currentUser.id());
 					}
 					
 					else if (input == 'd') {
-					System.out.print("Product ID to deactivate: ");
-					long id = Long.parseLong(scanner.nextLine().trim());
-
-					System.out.print("Reason: ");
-					String reason = scanner.nextLine().trim();
+						if ("VIEWER".equals(currentUser.role())) {
+							System.out.println("Not permitted.");
+							continue;
+						}
+						System.out.print("Product ID to deactivate: ");
+						long id = Long.parseLong(scanner.nextLine().trim());
+						
+						System.out.print("Reason: ");
+						String reason = scanner.nextLine().trim();
+						
+						// DB: UPDATE products SET active=false
+						productActions.deactivateProduct(id, reason, currentUser.id());
+					}
 					
-					// DB: UPDATE products SET active=false
-					productActions.deactivateProduct(id, reason);
+					else if (input == 'j') {
+						if ("VIEWER".equals(currentUser.role())) {
+							System.out.println("Not permitted.");
+							continue;
+						}
+						System.out.print("Product ID: ");
+						long productId = Long.parseLong(scanner.nextLine().trim());
+						
+						System.out.print("Quantity change (+ for add, - for remove): ");
+						int deltaQty = Integer.parseInt(scanner.nextLine().trim());
+						
+						System.out.print("Reason: ");
+						String reason = scanner.nextLine().trim();
+						
+						productActions.adjustStock(productId, deltaQty, reason, currentUser.id());
+					}
+					
+					// Basic invoice for customer with total amount. 
+					// Next week I will attempt to link invoices to products and adjust stock automatically.
+					else if (input == 'v') {
+						if ("VIEWER".equals(currentUser.role())) {
+							System.out.println("Not permitted.");
+							continue;
+						}
+						System.out.print("Customer name: ");
+						String cname = scanner.nextLine().trim();
+						
+						System.out.print("Total amount: ");
+						double total = Double.parseDouble(scanner.nextLine().trim());
+						
+						new Invoice().addInvoice(cname, total, currentUser.id());
+					}
+					
+					// List invoice
+					else if (input == 'i') {
+						new Invoice().listInvoices();
 					}
 					
 					else if (input == 'r') {
-							Reports.lowStockReport();
+						Reports.lowStockReport();
 							
 					// DB: SELECT FROM products WHERE stock_qty <= reorder_level
+					}
+					
+					else if (input == 't') {
+						Reports.auditLogReport(20);
 					}
 					
 					else if (input == 'q') {

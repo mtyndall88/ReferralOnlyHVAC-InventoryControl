@@ -13,6 +13,8 @@ public class DBConnection {
 	// Singleton: always return the same database connection instance
 	public static Connection getInstance() throws SQLException {
 		if (connection == null || connection.isClosed()) {
+			
+			// Hardcoded credentials are for production only
 			try {
 				String url = "jdbc:mysql://localhost/referral_inventory";
                 String user = "root";
