@@ -6,9 +6,12 @@ import java.sql.ResultSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class Reports {
+//Low-stock and audit reports (SoW #5) via prepared statements.
+public class Reports {	
+	// Logger
 	private static final Logger log = AppLogger.getLogger();
 	
+	// Low stock report
 	public static void lowStockReport() {
 		System.out.println("=== Low Stock Report ===" + "\n");
 		
@@ -44,13 +47,14 @@ public class Reports {
 			log.log(Level.SEVERE, "Error generating low stock report", ex);
 		}
 	}
-			
+	
+	// Audit log report
 	public static void auditLogReport(int maxRows) {
 		if (maxRows <= 0) maxRows = 20; 
 		System.out.println("=== Audit Log Report (most recent " + maxRows + ") ===\n");
 		
 		String sql = "SELECT al.id, al.created_at, u.username, al.entity, al.entity_id, al.action, al.details"
-				+ " FROM audit_log al LEFT JOIN users u ON u.id = al.user_id ORDER BY al.created_at DESC LIMIT ?";
+				+ " FROM audit_log al LEFT JOIN users u ON u.id = al.user_id ORDER BY al.id DESC LIMIT ?";
 		try (Connection connect = DBConnection.getInstance(); // Singleton: one shared DB connection
 			PreparedStatement ps = connect.prepareStatement(sql)) {
 			

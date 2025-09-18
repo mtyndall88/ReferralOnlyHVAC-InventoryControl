@@ -8,8 +8,8 @@ import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+//DAO for product CRUD + stock adjustments (SoW #3–#5); transactions & audit trail.
 public class Product {
-	
 	// Logger
 	private static final Logger log = AppLogger.getLogger();
 	
@@ -32,8 +32,8 @@ public class Product {
 		
 		try {
 			Connection connect = DBConnection.getInstance(); // Singleton: one shared DB connection
-			String sql = "SELECT id, sku, name, price, stock_qty, reorder_level " +
-						 "FROM products WHERE active=1 LIMIT 20 OFFSET 0"; // Pagination set at first 20 rows.
+			String sql = "SELECT id, sku, name, price, stock_qty, reorder_level, active " +
+			"FROM products WHERE active=1 LIMIT 20 OFFSET 0"; // Pagination set at first 20 rows.
 			
 			try (PreparedStatement ps = connect.prepareStatement(sql);
 					ResultSet rs = ps.executeQuery()) {
@@ -141,6 +141,7 @@ public class Product {
 				try (ResultSet keys = ps.getGeneratedKeys()) {
 					if (keys.next()) newId = keys.getLong(1);
 				}
+				
 				audit("PRODUCT", newId, "ADD_PRODUCT", "sku="+sku+", name="+name+", price="+price+", reorder="+reorderLevel, userId, connect);
 				System.out.println("Product added. ID = " + newId);
 				log.info("Product added successfully: SKU " + sku);

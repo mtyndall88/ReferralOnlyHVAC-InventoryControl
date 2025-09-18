@@ -9,11 +9,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 // Based on GeeksforGeeks Regex Pattern 
-//Password policy: At least 12 characters, one lower case, one upper case, one digit, and one special character.
 
+// Registration/login + policy regex (SoW #1);
 public class Auth {
+	
 	private static final Logger log = AppLogger.getLogger();
 	
+	// Password policy: At least 12 characters, one lower case, one upper case, one digit, and one special character.
 	// Regex to check password requirements
 	private static final String regex = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()\\-+=])(?=\\S+$).{12,}$";
 	

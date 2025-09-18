@@ -4,7 +4,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+//Singleton JDBC connection (SoW #6)
 public class DBConnection {
+	
 	private static Connection connection = null;
 	
 	private DBConnection() { // private constructor to prevent instantiation

@@ -4,8 +4,8 @@ import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+// Console menu + role gating (SoW #2, #8); invokes DAO methods (Week 5 DB integration)
 public class Main {
-	
 	// Logger
 	private static final Logger log = AppLogger.getLogger();
 	
@@ -51,7 +51,7 @@ public class Main {
 				else if (c == 'r') {
 					System.out.print("New username: ");
 					String u = scanner.nextLine().trim();
-					System.out.println("Password must be 12+ characters with one upper, lower, digit, and special charater.");
+					System.out.println("Password must be 12+ characters with one upper, lower, digit, and special character.");
 					System.out.print("New password: ");
 					String p = scanner.nextLine().trim();
 					Long id = auth.register(u, p, "STAFF"); // or "ADMIN" for your first user
@@ -193,7 +193,7 @@ public class Main {
 					}
 					
 					// Basic invoice for customer with total amount. 
-					// Next week I will attempt to link invoices to products and adjust stock automatically.
+					// Next week I will add single product invoice and adjust stock automatically.
 					else if (input == 'v') {
 						if ("VIEWER".equals(currentUser.role())) {
 							System.out.println("Not permitted.");
@@ -202,10 +202,13 @@ public class Main {
 						System.out.print("Customer name: ");
 						String cname = scanner.nextLine().trim();
 						
-						System.out.print("Total amount: ");
-						double total = Double.parseDouble(scanner.nextLine().trim());
+						System.out.print("Product ID: ");
+						long pid = Long.parseLong(scanner.nextLine().trim());
 						
-						new Invoice().addInvoice(cname, total, currentUser.id());
+						System.out.print("Quantity: ");
+						int qty = Integer.parseInt(scanner.nextLine().trim());
+						
+						new Invoice().addInvoice(cname, pid, qty, currentUser.id());
 					}
 					
 					// List invoice
