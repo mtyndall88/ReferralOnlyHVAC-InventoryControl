@@ -3,9 +3,7 @@
 ![Java](https://img.shields.io/badge/Java-17-blue) 
 ![MySQL](https://img.shields.io/badge/MySQL-8.0-orange) 
 ![IDE-Eclipse](https://img.shields.io/badge/IDE-Eclipse-purple) 
-![License](https://img.shields.io/badge/License-MIT-green) 
-![GitHub last commit](https://img.shields.io/github/last-commit/mtyndall88/referral-hvac-inventory) 
-![Repo Size](https://img.shields.io/github/repo-size/mtyndall88/referral-hvac-inventory)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ## 📌 Overview
 The **Referral Only HVAC Inventory Control System** is a Java-based application built to streamline inventory management for Referral Only HVAC.  
@@ -90,12 +88,19 @@ java -cp bin edu.rasmussenuniversity.cs.Main
 ---
 
 ## 🖥️ Usage
-- On startup, register a new account or login.  
-- Navigate using the menu options:  
-  - **P** → Product Management  
-  - **S** → Stock Adjustments  
-  - **R** → Reports  
-  - **Q** → Quit  
+- On startup, **(R)egister**, **(L)ogin**, **(Q)uit** 
+- Menu Loop:  
+  - **g** → Get all products (active list).
+  - **s** → Search by name/SKU (parameterized LIKE)
+  - **a** → Add product (SKU, name, desc, price, reorder; INSERT + generated key + audit)
+  - **u** → Update product (price/reorder; live UPDATE + audit)
+  - **d** → Deactivate product (live UPDATE + audit)
+  - **j** → Adjust stock (±qty with reason; transaction writes stock movement + audit)
+  - **v** → Add invoice with customer, product, qty, and total amount (creates invoice, line item, decrements stock, writes stock movement + audit)
+  - **i** → Lists the last 10 invoices
+  - **r** → Low-stock report (DB view)
+  - **t** → Audit log report for last 20 entries
+  - **q** → Quits the program and logs the exit
 
 Role restrictions apply (e.g., `VIEWER` cannot edit products or stock).  
 
